@@ -75,3 +75,57 @@ func FormatCellData(w io.Writer, data *CellData, format OutputFormat) error {
 	table.Render()
 	return nil
 }
+
+// FormatSheetList outputs sheet tab list in the specified format
+func FormatSheetList(w io.Writer, sheetInfos []SheetInfo, format OutputFormat) error {
+	if format == OutputFormatJSON {
+		data, err := json.MarshalIndent(sheetInfos, "", "  ")
+		if err != nil {
+			return fmt.Errorf("unable to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(w, string(data))
+		return nil
+	}
+
+	if len(sheetInfos) == 0 {
+		fmt.Fprintln(w, "No sheets found.")
+		return nil
+	}
+
+	table := tablewriter.NewWriter(w)
+	table.Header("SHEET ID", "TITLE", "INDEX", "ROWS", "COLS")
+
+	for _, s := range sheetInfos {
+		table.Append(s.SheetID, s.Title, s.Index, s.RowCount, s.ColCount)
+	}
+
+	table.Render()
+	return nil
+}
+
+// FormatCellLocations outputs found cell locations in the specified format
+func FormatCellLocations(w io.Writer, locations []CellLocation, format OutputFormat) error {
+	if format == OutputFormatJSON {
+		data, err := json.MarshalIndent(locations, "", "  ")
+		if err != nil {
+			return fmt.Errorf("unable to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(w, string(data))
+		return nil
+	}
+
+	if len(locations) == 0 {
+		fmt.Fprintln(w, "No matching cells found.")
+		return nil
+	}
+
+	table := tablewriter.NewWriter(w)
+	table.Header("SHEET", "CELL", "VALUE")
+
+	for _, loc := range locations {
+		table.Append(loc.Sheet, loc.Cell, loc.Value)
+	}
+
+	table.Render()
+	return nil
+}

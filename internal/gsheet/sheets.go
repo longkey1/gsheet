@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"google.golang.org/api/drive/v3"
@@ -18,6 +19,24 @@ type SpreadsheetInfo struct {
 	CreatedTime string `json:"createdTime"`
 	ModifiedTime string `json:"modifiedTime"`
 	WebViewLink string `json:"webViewLink"`
+}
+
+// SheetInfo represents a worksheet tab within a spreadsheet
+type SheetInfo struct {
+	SheetID  int64  `json:"sheetId"`
+	Title    string `json:"title"`
+	Index    int64  `json:"index"`
+	RowCount int64  `json:"rowCount"`
+	ColCount int64  `json:"colCount"`
+}
+
+// CellLocation represents a found cell's position
+type CellLocation struct {
+	Sheet string `json:"sheet"`
+	Row   int    `json:"row"`
+	Col   int    `json:"col"`
+	Cell  string `json:"cell"`
+	Value string `json:"value"`
 }
 
 // CellData represents cell values
@@ -120,6 +139,109 @@ func ClearValues(svc *sheets.Service, spreadsheetID, rangeStr string) error {
 		return fmt.Errorf("unable to clear data in sheet: %v", err)
 	}
 	return nil
+}
+
+// GetSheets retrieves all worksheet tabs from a spreadsheet
+func GetSheets(svc *sheets.Service, spreadsheetID string) ([]SheetInfo, error) {
+	resp, err := svc.Spreadsheets.Get(spreadsheetID).
+		Fields("sheets.properties").Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get spreadsheet: %v", err)
+	}
+
+	var result []SheetInfo
+	for _, s := range resp.Sheets {
+		p := s.Properties
+		result = append(result, SheetInfo{
+			SheetID:  p.SheetId,
+			Title:    p.Title,
+			Index:    p.Index,
+			RowCount: p.GridProperties.RowCount,
+			ColCount: p.GridProperties.ColumnCount,
+		})
+	}
+	return result, nil
+}
+
+// FilterSheets filters sheets by substring or regex match on title
+func FilterSheets(allSheets []SheetInfo, query string, useRegex bool) ([]SheetInfo, error) {
+	if query == "" {
+		return allSheets, nil
+	}
+
+	if useRegex {
+		re, err := regexp.Compile(query)
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex pattern: %v", err)
+		}
+		var result []SheetInfo
+		for _, s := range allSheets {
+			if re.MatchString(s.Title) {
+				result = append(result, s)
+			}
+		}
+		return result, nil
+	}
+
+	var result []SheetInfo
+	for _, s := range allSheets {
+		if strings.Contains(s.Title, query) {
+			result = append(result, s)
+		}
+	}
+	return result, nil
+}
+
+// FindCells searches for cells containing the query text in a worksheet
+func FindCells(svc *sheets.Service, spreadsheetID, sheet, query string, useRegex bool) ([]CellLocation, error) {
+	data, err := GetValues(svc, spreadsheetID, sheet)
+	if err != nil {
+		return nil, err
+	}
+
+	var re *regexp.Regexp
+	if useRegex {
+		re, err = regexp.Compile(query)
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex pattern: %v", err)
+		}
+	}
+
+	var results []CellLocation
+	for rowIdx, row := range data.Values {
+		for colIdx, cell := range row {
+			matched := false
+			if useRegex {
+				matched = re.MatchString(cell)
+			} else {
+				matched = strings.Contains(cell, query)
+			}
+			if matched {
+				results = append(results, CellLocation{
+					Sheet: sheet,
+					Row:   rowIdx,
+					Col:   colIdx,
+					Cell:  colRowToA1(colIdx, rowIdx),
+					Value: cell,
+				})
+			}
+		}
+	}
+	return results, nil
+}
+
+// colRowToA1 converts 0-based column and row to A1 notation
+func colRowToA1(col, row int) string {
+	colStr := ""
+	c := col
+	for {
+		colStr = string(rune('A'+c%26)) + colStr
+		c = c/26 - 1
+		if c < 0 {
+			break
+		}
+	}
+	return fmt.Sprintf("%s%d", colStr, row+1)
 }
 
 // BuildRange constructs a range string like "Sheet1!A1:C10"
