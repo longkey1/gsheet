@@ -1,0 +1,48 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "6"  # For Raspberry Pi 1, 2
+      - "7"  # For Raspberry Pi 3, 4, 5 (32-bit)
+    ignore:
+      - goos: darwin
+        goarch: 386
+    ldflags:
+      - -s -w
+      - -X github.com/longkey1/gsheet/internal/version.Version={{.Version}}
+      - -X github.com/longkey1/gsheet/internal/version.CommitSHA={{.Commit}}
+      - -X github.com/longkey1/gsheet/internal/version.BuildTime={{.Date}}
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else if eq .Arch "arm" }}armv{{ .Arm }}
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - none*
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - Merge pull request
+      - Merge branch

@@ -1,0 +1,36 @@
+# Build outputs
+/bin/
+/dist/
+
+# Executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Go workspace
+go.work
+go.work.sum
+vendor/
+
+# Environment
+.env
+.envrc
+.direnv/
+
+# Cache
+/.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
