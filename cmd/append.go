@@ -36,6 +36,7 @@ func runAppend(cmd *cobra.Command, args []string) error {
 	spreadsheetID := args[0]
 	sheet, _ := cmd.Flags().GetString("sheet")
 	valuesStr, _ := cmd.Flags().GetString("values")
+	filePath, _ := cmd.Flags().GetString("file")
 	useStdin, _ := cmd.Flags().GetBool("stdin")
 
 	cfg := GetConfig()
@@ -43,17 +44,9 @@ func runAppend(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var values [][]interface{}
-	if useStdin {
-		var err error
-		values, err = gsheet.ParseValuesFromReader(os.Stdin)
-		if err != nil {
-			return err
-		}
-	} else if valuesStr != "" {
-		values = gsheet.ParseValues(valuesStr)
-	} else {
-		return fmt.Errorf("either --values or --stdin is required")
+	values, err := parseInputValues(filePath, useStdin, valuesStr)
+	if err != nil {
+		return err
 	}
 
 	svc, err := gsheet.NewService(context.Background(), cfg)
@@ -78,5 +71,6 @@ func init() {
 	rootCmd.AddCommand(appendCmd)
 	appendCmd.Flags().String("sheet", "", "Sheet name (default: Sheet1)")
 	appendCmd.Flags().String("values", "", `Values to append (semicolon-separated rows, comma-separated cells, e.g., "a,b,c;d,e,f")`)
+	appendCmd.Flags().String("file", "", "Path to CSV file")
 	appendCmd.Flags().Bool("stdin", false, "Read CSV values from stdin")
 }

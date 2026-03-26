@@ -81,6 +81,12 @@ gsheet sheets list <spreadsheet-id> --format json
 ### Cells - Cell Operations
 
 ```bash
+# Get cell values
+gsheet cells get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
+
+# Get cell values as CSV
+gsheet cells get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10" --format csv
+
 # Search for cells by content
 gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "検索文字列"
 
@@ -95,6 +101,18 @@ gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "C5" --values "150
 
 # Update cells from stdin (CSV format)
 cat data.csv | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --stdin
+
+# Update cells from a CSV file
+gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --file data.csv
+
+# Import CSV file into a worksheet
+gsheet cells import <spreadsheet-id> --sheet "Sheet1" --file data.csv
+
+# Import CSV from stdin
+cat data.csv | gsheet cells import <spreadsheet-id> --sheet "Sheet1" --stdin
+
+# Export to CSV file
+gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
 ```
 
 ### Typical Workflow
@@ -118,6 +136,17 @@ gsheet cells list abc123 --sheet "2026-03月" -q "売上"
 gsheet cells update abc123 --sheet "2026-03月" --range "C5" --values "15000"
 ```
 
+### CSV Workflow Examples
+
+```bash
+# BigQuery → Spreadsheet
+bq query --format=csv 'SELECT * FROM dataset.table' > data.csv
+gsheet cells import <spreadsheet-id> --sheet "Sheet1" --file data.csv
+
+# Spreadsheet → CSV → LLM / other tools
+gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
+```
+
 ### Legacy Commands
 
 The following commands are still available for backward compatibility:
@@ -126,14 +155,20 @@ The following commands are still available for backward compatibility:
 # List spreadsheets (same as: gsheet files list)
 gsheet list
 
-# Get cell values
+# Get cell values (same as: gsheet cells get)
 gsheet get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
+
+# Get cell values as CSV
+gsheet get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10" --format csv
 
 # Update cell values (same as: gsheet cells update)
 gsheet update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --values "a,b,c;d,e,f"
 
 # Append rows
 gsheet append <spreadsheet-id> --sheet "Sheet1" --values "a,b,c;d,e,f"
+
+# Append rows from CSV file
+gsheet append <spreadsheet-id> --sheet "Sheet1" --file data.csv
 
 # Clear cell values
 gsheet clear <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"

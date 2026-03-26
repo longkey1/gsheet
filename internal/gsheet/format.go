@@ -1,6 +1,7 @@
 package gsheet
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ type OutputFormat string
 const (
 	OutputFormatText OutputFormat = "text"
 	OutputFormatJSON OutputFormat = "json"
+	OutputFormatCSV  OutputFormat = "csv"
 )
 
 // FormatSpreadsheetList outputs spreadsheet list in the specified format
@@ -47,6 +49,20 @@ func FormatCellData(w io.Writer, data *CellData, format OutputFormat) error {
 		}
 		fmt.Fprintln(w, string(jsonData))
 		return nil
+	}
+
+	if format == OutputFormatCSV {
+		if len(data.Values) == 0 {
+			return nil
+		}
+		writer := csv.NewWriter(w)
+		for _, row := range data.Values {
+			if err := writer.Write(row); err != nil {
+				return fmt.Errorf("unable to write CSV: %w", err)
+			}
+		}
+		writer.Flush()
+		return writer.Error()
 	}
 
 	if len(data.Values) == 0 {

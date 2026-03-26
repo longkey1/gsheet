@@ -64,5 +64,5 @@ func init() {
 	rootCmd.AddCommand(getCmd)
 	getCmd.Flags().String("sheet", "", "Sheet name (default: Sheet1)")
 	getCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C10)")
-	getCmd.Flags().String("format", "text", "Output format (text or json)")
+	getCmd.Flags().String("format", "text", "Output format (text, json, or csv)")
 }
