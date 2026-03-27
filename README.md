@@ -77,6 +77,12 @@ gsheet sheets list <spreadsheet-id> -q "2026-0[1-3]" --regex
 # Output as JSON
 gsheet sheets list <spreadsheet-id> --format json
 
+# Add a new worksheet tab
+gsheet sheets add <spreadsheet-id> --title "2026-04月"
+
+# Copy an existing worksheet tab
+gsheet sheets add <spreadsheet-id> --title "2026-04月" --from "2026-03月"
+
 # Insert 3 rows at row 5
 gsheet sheets rows insert <spreadsheet-id> --sheet "Sheet1" --start 5 --count 3
 

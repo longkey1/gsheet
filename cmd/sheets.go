@@ -38,6 +38,14 @@ var sheetsListCmd = &cobra.Command{
 	RunE:  runSheetsList,
 }
 
+// sheetsAddCmd represents the sheets add command
+var sheetsAddCmd = &cobra.Command{
+	Use:   "add <spreadsheet-id>",
+	Short: "Add a new worksheet tab to a spreadsheet",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runSheetsAdd,
+}
+
 // sheetsRowsCmd represents the sheets rows command
 var sheetsRowsCmd = &cobra.Command{
 	Use:   "rows",
@@ -109,6 +117,46 @@ func runSheetsList(cmd *cobra.Command, args []string) error {
 	}
 
 	return gsheet.FormatSheetList(os.Stdout, filtered, gsheet.OutputFormat(format))
+}
+
+func runSheetsAdd(cmd *cobra.Command, args []string) error {
+	spreadsheetID := args[0]
+	title, _ := cmd.Flags().GetString("title")
+	from, _ := cmd.Flags().GetString("from")
+
+	if title == "" {
+		return fmt.Errorf("--title is required")
+	}
+
+	cfg := GetConfig()
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	svc, err := gsheet.NewService(context.Background(), cfg)
+	if err != nil {
+		return err
+	}
+
+	var info *gsheet.SheetInfo
+	if from != "" {
+		sourceSheetID, err := gsheet.GetSheetID(svc.Sheets.Service, spreadsheetID, from)
+		if err != nil {
+			return err
+		}
+		info, err = gsheet.DuplicateSheet(svc.Sheets.Service, spreadsheetID, sourceSheetID, title)
+		if err != nil {
+			return err
+		}
+	} else {
+		info, err = gsheet.AddSheet(svc.Sheets.Service, spreadsheetID, title)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Fprintf(os.Stdout, "Sheet \"%s\" added successfully (sheetId: %d).\n", info.Title, info.SheetID)
+	return nil
 }
 
 func runDimensionInsert(cmd *cobra.Command, args []string, dimension string) error {
@@ -217,6 +265,10 @@ func runSheetsColsDelete(cmd *cobra.Command, args []string) error {
 func init() {
 	rootCmd.AddCommand(sheetsCmd)
 	sheetsCmd.AddCommand(sheetsListCmd)
+	sheetsCmd.AddCommand(sheetsAddCmd)
+	sheetsAddCmd.Flags().String("title", "", "Title for the new worksheet tab (required)")
+	sheetsAddCmd.Flags().String("from", "", "Copy from an existing sheet by title")
+
 	sheetsListCmd.Flags().StringP("query", "q", "", "Filter sheets by title (substring match)")
 	sheetsListCmd.Flags().Bool("regex", false, "Treat query as regular expression")
 	sheetsListCmd.Flags().String("format", "text", "Output format (text or json)")

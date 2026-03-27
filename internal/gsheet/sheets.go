@@ -230,6 +230,59 @@ func FindCells(svc *sheets.Service, spreadsheetID, sheet, query string, useRegex
 	return results, nil
 }
 
+// AddSheet adds a new empty worksheet tab to a spreadsheet.
+func AddSheet(svc *sheets.Service, spreadsheetID, title string) (*SheetInfo, error) {
+	req := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			{
+				AddSheet: &sheets.AddSheetRequest{
+					Properties: &sheets.SheetProperties{
+						Title: title,
+					},
+				},
+			},
+		},
+	}
+	resp, err := svc.Spreadsheets.BatchUpdate(spreadsheetID, req).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to add sheet: %v", err)
+	}
+	p := resp.Replies[0].AddSheet.Properties
+	return &SheetInfo{
+		SheetID:  p.SheetId,
+		Title:    p.Title,
+		Index:    p.Index,
+		RowCount: p.GridProperties.RowCount,
+		ColCount: p.GridProperties.ColumnCount,
+	}, nil
+}
+
+// DuplicateSheet copies an existing worksheet tab within a spreadsheet.
+func DuplicateSheet(svc *sheets.Service, spreadsheetID string, sourceSheetID int64, newTitle string) (*SheetInfo, error) {
+	req := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			{
+				DuplicateSheet: &sheets.DuplicateSheetRequest{
+					SourceSheetId: sourceSheetID,
+					NewSheetName:  newTitle,
+				},
+			},
+		},
+	}
+	resp, err := svc.Spreadsheets.BatchUpdate(spreadsheetID, req).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to duplicate sheet: %v", err)
+	}
+	p := resp.Replies[0].DuplicateSheet.Properties
+	return &SheetInfo{
+		SheetID:  p.SheetId,
+		Title:    p.Title,
+		Index:    p.Index,
+		RowCount: p.GridProperties.RowCount,
+		ColCount: p.GridProperties.ColumnCount,
+	}, nil
+}
+
 // GetSheetID finds the numeric sheetId for a given sheet title.
 func GetSheetID(svc *sheets.Service, spreadsheetID, sheetTitle string) (int64, error) {
 	allSheets, err := GetSheets(svc, spreadsheetID)
