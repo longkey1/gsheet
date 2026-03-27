@@ -54,6 +54,14 @@ var cellsUpdateCmd = &cobra.Command{
 	RunE:  runCellsUpdate,
 }
 
+// cellsClearCmd represents the cells clear command
+var cellsClearCmd = &cobra.Command{
+	Use:   "clear <spreadsheet-id>",
+	Short: "Clear cell values in a worksheet",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runCellsClear,
+}
+
 // cellsImportCmd represents the cells import command
 var cellsImportCmd = &cobra.Command{
 	Use:   "import <spreadsheet-id>",
@@ -160,6 +168,35 @@ func runCellsUpdate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runCellsClear(cmd *cobra.Command, args []string) error {
+	spreadsheetID := args[0]
+	sheet, _ := cmd.Flags().GetString("sheet")
+	cellRange, _ := cmd.Flags().GetString("range")
+
+	if cellRange == "" {
+		return fmt.Errorf("--range is required")
+	}
+
+	cfg := GetConfig()
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	svc, err := gsheet.NewService(context.Background(), cfg)
+	if err != nil {
+		return err
+	}
+
+	rangeStr := gsheet.BuildRange(sheet, cellRange)
+
+	if err := gsheet.ClearValues(svc.Sheets.Service, spreadsheetID, rangeStr); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stdout, "Values cleared successfully.")
+	return nil
+}
+
 func runCellsImport(cmd *cobra.Command, args []string) error {
 	spreadsheetID := args[0]
 	sheet, _ := cmd.Flags().GetString("sheet")
@@ -235,6 +272,10 @@ func init() {
 	cellsUpdateCmd.Flags().String("values", "", `Values to set (semicolon-separated rows, comma-separated cells, e.g., "a,b,c;d,e,f")`)
 	cellsUpdateCmd.Flags().String("file", "", "Path to CSV file")
 	cellsUpdateCmd.Flags().Bool("stdin", false, "Read CSV values from stdin")
+
+	cellsCmd.AddCommand(cellsClearCmd)
+	cellsClearCmd.Flags().String("sheet", "", "Sheet name")
+	cellsClearCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C10)")
 
 	cellsCmd.AddCommand(cellsImportCmd)
 	cellsImportCmd.Flags().String("sheet", "", "Sheet name (required)")

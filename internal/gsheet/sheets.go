@@ -230,6 +230,69 @@ func FindCells(svc *sheets.Service, spreadsheetID, sheet, query string, useRegex
 	return results, nil
 }
 
+// GetSheetID finds the numeric sheetId for a given sheet title.
+func GetSheetID(svc *sheets.Service, spreadsheetID, sheetTitle string) (int64, error) {
+	allSheets, err := GetSheets(svc, spreadsheetID)
+	if err != nil {
+		return 0, err
+	}
+	for _, s := range allSheets {
+		if s.Title == sheetTitle {
+			return s.SheetID, nil
+		}
+	}
+	return 0, fmt.Errorf("sheet not found: %s", sheetTitle)
+}
+
+// InsertDimension inserts rows or columns into a sheet.
+// dimension is "ROWS" or "COLUMNS". startIndex and endIndex are 0-based (endIndex is exclusive).
+func InsertDimension(svc *sheets.Service, spreadsheetID string, sheetID int64, dimension string, startIndex, endIndex int64, inheritFromBefore bool) error {
+	req := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			{
+				InsertDimension: &sheets.InsertDimensionRequest{
+					Range: &sheets.DimensionRange{
+						SheetId:    sheetID,
+						Dimension:  dimension,
+						StartIndex: startIndex,
+						EndIndex:   endIndex,
+					},
+					InheritFromBefore: inheritFromBefore,
+				},
+			},
+		},
+	}
+	_, err := svc.Spreadsheets.BatchUpdate(spreadsheetID, req).Do()
+	if err != nil {
+		return fmt.Errorf("unable to insert %s: %v", strings.ToLower(dimension), err)
+	}
+	return nil
+}
+
+// DeleteDimension deletes rows or columns from a sheet.
+// dimension is "ROWS" or "COLUMNS". startIndex and endIndex are 0-based (endIndex is exclusive).
+func DeleteDimension(svc *sheets.Service, spreadsheetID string, sheetID int64, dimension string, startIndex, endIndex int64) error {
+	req := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			{
+				DeleteDimension: &sheets.DeleteDimensionRequest{
+					Range: &sheets.DimensionRange{
+						SheetId:    sheetID,
+						Dimension:  dimension,
+						StartIndex: startIndex,
+						EndIndex:   endIndex,
+					},
+				},
+			},
+		},
+	}
+	_, err := svc.Spreadsheets.BatchUpdate(spreadsheetID, req).Do()
+	if err != nil {
+		return fmt.Errorf("unable to delete %s: %v", strings.ToLower(dimension), err)
+	}
+	return nil
+}
+
 // colRowToA1 converts 0-based column and row to A1 notation
 func colRowToA1(col, row int) string {
 	colStr := ""

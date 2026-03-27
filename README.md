@@ -76,6 +76,21 @@ gsheet sheets list <spreadsheet-id> -q "2026-0[1-3]" --regex
 
 # Output as JSON
 gsheet sheets list <spreadsheet-id> --format json
+
+# Insert 3 rows at row 5
+gsheet sheets rows insert <spreadsheet-id> --sheet "Sheet1" --start 5 --count 3
+
+# Insert rows inheriting formatting from the row before
+gsheet sheets rows insert <spreadsheet-id> --sheet "Sheet1" --start 5 --after
+
+# Delete rows 3 to 5
+gsheet sheets rows delete <spreadsheet-id> --sheet "Sheet1" --start 3 --count 3
+
+# Insert 2 columns at column 3
+gsheet sheets cols insert <spreadsheet-id> --sheet "Sheet1" --start 3 --count 2
+
+# Delete column 2
+gsheet sheets cols delete <spreadsheet-id> --sheet "Sheet1" --start 2
 ```
 
 ### Cells - Cell Operations
@@ -111,6 +126,9 @@ gsheet cells import <spreadsheet-id> --sheet "Sheet1" --file data.csv
 # Import CSV from stdin
 cat data.csv | gsheet cells import <spreadsheet-id> --sheet "Sheet1" --stdin
 
+# Clear cell values
+gsheet cells clear <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
+
 # Export to CSV file
 gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
 ```
@@ -145,33 +163,6 @@ gsheet cells import <spreadsheet-id> --sheet "Sheet1" --file data.csv
 
 # Spreadsheet → CSV → LLM / other tools
 gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
-```
-
-### Legacy Commands
-
-The following commands are still available for backward compatibility:
-
-```bash
-# List spreadsheets (same as: gsheet files list)
-gsheet list
-
-# Get cell values (same as: gsheet cells get)
-gsheet get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
-
-# Get cell values as CSV
-gsheet get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10" --format csv
-
-# Update cell values (same as: gsheet cells update)
-gsheet update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --values "a,b,c;d,e,f"
-
-# Append rows
-gsheet append <spreadsheet-id> --sheet "Sheet1" --values "a,b,c;d,e,f"
-
-# Append rows from CSV file
-gsheet append <spreadsheet-id> --sheet "Sheet1" --file data.csv
-
-# Clear cell values
-gsheet clear <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
 ```
 
 ### Version
