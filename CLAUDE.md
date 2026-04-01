@@ -4,16 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Development Commands
 
-This project uses direnv for Go version management. All commands must be run via `direnv exec .`:
-
 ```bash
-direnv exec . make build     # Build binary to ./bin/gsheet
-direnv exec . make test      # Run tests
-direnv exec . make vet       # Lint
-direnv exec . make fmt       # Format code
-direnv exec . make tidy      # go mod tidy
-direnv exec . make clean     # Remove build artifacts
-direnv exec . make release type=patch dryrun=false  # Tag and push a release
+make build     # Build binary to ./bin/gsheet
+make test      # Run tests
+make vet       # Lint
+make fmt       # Format code
+make tidy      # go mod tidy
+make clean     # Remove build artifacts
+make release type=patch dryrun=false  # Tag and push a release
 ```
 
 The Makefile reads `.product_name` for the binary name and `go.mod` for the Go version. These are shared with the sibling `gml` project and should not contain app-specific hardcoding.
