@@ -139,6 +139,22 @@ gsheet cells clear <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
 gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
 ```
 
+### Get - Quick Access via URL
+
+Fetch cells directly from a Google Sheets URL. The spreadsheet ID, worksheet tab (`gid`), and range are all resolved from the URL, so no flags are required.
+
+```bash
+# Copy the URL from your browser (must be quoted — the shell would otherwise strip everything after #)
+gsheet get 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=123456&range=A1:C10'
+
+# Without a range, the entire worksheet tab is fetched
+gsheet get 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=123456'
+
+# Output as JSON or CSV
+gsheet get 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=123456&range=A1:C10' --format json
+gsheet get 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=123456&range=A1:C10' --format csv
+```
+
 ### Typical Workflow
 
 ```bash

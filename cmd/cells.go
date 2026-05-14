@@ -41,7 +41,7 @@ var cellsListCmd = &cobra.Command{
 // cellsGetCmd represents the cells get command
 var cellsGetCmd = &cobra.Command{
 	Use:   "get <spreadsheet-id>",
-	Short: "Get cell values from a worksheet",
+	Short: "Get cell values from a worksheet (entire sheet if --range is omitted)",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runCellsGet,
 }
@@ -263,7 +263,7 @@ func init() {
 
 	cellsCmd.AddCommand(cellsGetCmd)
 	cellsGetCmd.Flags().String("sheet", "", "Sheet name (default: Sheet1)")
-	cellsGetCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C10)")
+	cellsGetCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C10). Omit to fetch the entire sheet.")
 	cellsGetCmd.Flags().String("format", "text", "Output format (text, json, or csv)")
 
 	cellsCmd.AddCommand(cellsUpdateCmd)
