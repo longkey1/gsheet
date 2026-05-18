@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/longkey1/gsheet/internal/gsheet"
@@ -234,6 +235,8 @@ func runCellsImport(cmd *cobra.Command, args []string) error {
 }
 
 // parseInputValues reads values from --file, --stdin, or --values flag.
+// --stdin reads the entire content as a single cell value.
+// --file reads CSV-formatted data.
 func parseInputValues(filePath string, useStdin bool, valuesStr string) ([][]interface{}, error) {
 	if filePath != "" {
 		f, err := os.Open(filePath)
@@ -244,7 +247,11 @@ func parseInputValues(filePath string, useStdin bool, valuesStr string) ([][]int
 		return gsheet.ParseValuesFromReader(f)
 	}
 	if useStdin {
-		return gsheet.ParseValuesFromReader(os.Stdin)
+		b, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read stdin: %w", err)
+		}
+		return [][]interface{}{{string(b)}}, nil
 	}
 	if valuesStr != "" {
 		return gsheet.ParseValues(valuesStr), nil
@@ -271,7 +278,7 @@ func init() {
 	cellsUpdateCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C2)")
 	cellsUpdateCmd.Flags().String("values", "", `Values to set (semicolon-separated rows, comma-separated cells, e.g., "a,b,c;d,e,f")`)
 	cellsUpdateCmd.Flags().String("file", "", "Path to CSV file")
-	cellsUpdateCmd.Flags().Bool("stdin", false, "Read CSV values from stdin")
+	cellsUpdateCmd.Flags().Bool("stdin", false, "Read stdin content as a single cell value")
 
 	cellsCmd.AddCommand(cellsClearCmd)
 	cellsClearCmd.Flags().String("sheet", "", "Sheet name")

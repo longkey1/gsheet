@@ -120,11 +120,12 @@ gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "検索文字列" --forma
 # Update cells with inline values (rows separated by ";", cells by ",")
 gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "C5" --values "15000"
 
-# Update cells from stdin (CSV format)
-cat data.csv | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --stdin
-
 # Update cells from a CSV file
 gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --file data.csv
+
+# Write the entire stdin content into a single cell (preserves newlines, no CSV parsing)
+echo "multi-line\nnote" | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "B2" --stdin
+cat note.md | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "B2" --stdin
 
 # Import CSV file into a worksheet
 gsheet cells import <spreadsheet-id> --sheet "Sheet1" --file data.csv
