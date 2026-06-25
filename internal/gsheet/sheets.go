@@ -298,6 +298,28 @@ func GetSheetID(svc *sheets.Service, spreadsheetID, sheetTitle string) (int64, e
 	return 0, fmt.Errorf("sheet not found: %s", sheetTitle)
 }
 
+// RenameSheet renames a worksheet tab.
+func RenameSheet(svc *sheets.Service, spreadsheetID string, sheetID int64, newTitle string) error {
+	req := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			{
+				UpdateSheetProperties: &sheets.UpdateSheetPropertiesRequest{
+					Properties: &sheets.SheetProperties{
+						SheetId: sheetID,
+						Title:   newTitle,
+					},
+					Fields: "title",
+				},
+			},
+		},
+	}
+	_, err := svc.Spreadsheets.BatchUpdate(spreadsheetID, req).Do()
+	if err != nil {
+		return fmt.Errorf("unable to rename sheet: %v", err)
+	}
+	return nil
+}
+
 // InsertDimension inserts rows or columns into a sheet.
 // dimension is "ROWS" or "COLUMNS". startIndex and endIndex are 0-based (endIndex is exclusive).
 func InsertDimension(svc *sheets.Service, spreadsheetID string, sheetID int64, dimension string, startIndex, endIndex int64, inheritFromBefore bool) error {

@@ -46,6 +46,14 @@ var sheetsAddCmd = &cobra.Command{
 	RunE:  runSheetsAdd,
 }
 
+// sheetsRenameCmd represents the sheets rename command
+var sheetsRenameCmd = &cobra.Command{
+	Use:   "rename <spreadsheet-id>",
+	Short: "Rename a worksheet tab in a spreadsheet",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runSheetsRename,
+}
+
 // sheetsRowsCmd represents the sheets rows command
 var sheetsRowsCmd = &cobra.Command{
 	Use:   "rows",
@@ -117,6 +125,41 @@ func runSheetsList(cmd *cobra.Command, args []string) error {
 	}
 
 	return gsheet.FormatSheetList(os.Stdout, filtered, gsheet.OutputFormat(format))
+}
+
+func runSheetsRename(cmd *cobra.Command, args []string) error {
+	spreadsheetID := args[0]
+	sheet, _ := cmd.Flags().GetString("sheet")
+	title, _ := cmd.Flags().GetString("title")
+
+	if sheet == "" {
+		return fmt.Errorf("--sheet is required")
+	}
+	if title == "" {
+		return fmt.Errorf("--title is required")
+	}
+
+	cfg := GetConfig()
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	svc, err := gsheet.NewService(context.Background(), cfg)
+	if err != nil {
+		return err
+	}
+
+	sheetID, err := gsheet.GetSheetID(svc.Sheets.Service, spreadsheetID, sheet)
+	if err != nil {
+		return err
+	}
+
+	if err := gsheet.RenameSheet(svc.Sheets.Service, spreadsheetID, sheetID, title); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stdout, "Sheet \"%s\" renamed to \"%s\" successfully.\n", sheet, title)
+	return nil
 }
 
 func runSheetsAdd(cmd *cobra.Command, args []string) error {
@@ -268,6 +311,10 @@ func init() {
 	sheetsCmd.AddCommand(sheetsAddCmd)
 	sheetsAddCmd.Flags().String("title", "", "Title for the new worksheet tab (required)")
 	sheetsAddCmd.Flags().String("from", "", "Copy from an existing sheet by title")
+
+	sheetsCmd.AddCommand(sheetsRenameCmd)
+	sheetsRenameCmd.Flags().String("sheet", "", "Current sheet name (required)")
+	sheetsRenameCmd.Flags().String("title", "", "New sheet name (required)")
 
 	sheetsListCmd.Flags().StringP("query", "q", "", "Filter sheets by title (substring match)")
 	sheetsListCmd.Flags().Bool("regex", false, "Treat query as regular expression")

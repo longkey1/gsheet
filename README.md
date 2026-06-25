@@ -53,7 +53,7 @@ This will open your browser for Google OAuth authentication.
 gsheet files list
 
 # Search spreadsheets by name
-gsheet files list -q "家計簿"
+gsheet files list -q "budget"
 
 # Show only spreadsheets owned by me
 gsheet files list --mine
@@ -78,10 +78,13 @@ gsheet sheets list <spreadsheet-id> -q "2026-0[1-3]" --regex
 gsheet sheets list <spreadsheet-id> --format json
 
 # Add a new worksheet tab
-gsheet sheets add <spreadsheet-id> --title "2026-04月"
+gsheet sheets add <spreadsheet-id> --title "2026-04"
 
 # Copy an existing worksheet tab
-gsheet sheets add <spreadsheet-id> --title "2026-04月" --from "2026-03月"
+gsheet sheets add <spreadsheet-id> --title "2026-04" --from "2026-03"
+
+# Rename a worksheet tab
+gsheet sheets rename <spreadsheet-id> --sheet "2026-03" --title "March 2026"
 
 # Insert 3 rows at row 5
 gsheet sheets rows insert <spreadsheet-id> --sheet "Sheet1" --start 5 --count 3
@@ -109,13 +112,13 @@ gsheet cells get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
 gsheet cells get <spreadsheet-id> --sheet "Sheet1" --range "A1:C10" --format csv
 
 # Search for cells by content
-gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "検索文字列"
+gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "keyword"
 
 # Search with regex
-gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "合計.*円" --regex
+gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "total.*usd" --regex
 
 # Output as JSON
-gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "検索文字列" --format json
+gsheet cells list <spreadsheet-id> --sheet "Sheet1" -q "keyword" --format json
 
 # Update cells with inline values (rows separated by ";", cells by ",")
 gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "C5" --values "15000"
@@ -140,6 +143,23 @@ gsheet cells clear <spreadsheet-id> --sheet "Sheet1" --range "A1:C10"
 gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
 ```
 
+### Notes - Cell Note Operations
+
+```bash
+# Set a note on a cell
+gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --note "manually entered"
+
+# Read note text from stdin
+echo "supplemental comment" | gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --stdin
+cat memo.txt | gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --stdin
+
+# Clear a note (omit --note flag)
+gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3"
+
+# Clear a note (pass empty string)
+gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --note ""
+```
+
 ### Get - Quick Access via URL
 
 Fetch cells directly from a Google Sheets URL. The spreadsheet ID, worksheet tab (`gid`), and range are all resolved from the URL, so no flags are required.
@@ -160,21 +180,21 @@ gsheet get 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=123456&range=
 
 ```bash
 # 1. Find the spreadsheet
-gsheet files list -q "家計簿"
-# → ID: abc123, NAME: "家計簿2026"
+gsheet files list -q "budget"
+# → ID: abc123, NAME: "Budget 2026"
 
 # 2. Find the worksheet tab
 gsheet sheets list abc123 -q "2026-03"
-# → TITLE: "2026-03月"
+# → TITLE: "2026-03"
 
 # 3. Find the cell coordinates
-gsheet cells list abc123 --sheet "2026-03月" -q "25日"
+gsheet cells list abc123 --sheet "2026-03" -q "day 25"
 # → CELL: A5
-gsheet cells list abc123 --sheet "2026-03月" -q "売上"
+gsheet cells list abc123 --sheet "2026-03" -q "revenue"
 # → CELL: C1
 
 # 4. Update the cell at the intersection
-gsheet cells update abc123 --sheet "2026-03月" --range "C5" --values "15000"
+gsheet cells update abc123 --sheet "2026-03" --range "C5" --values "15000"
 ```
 
 ### CSV Workflow Examples
