@@ -146,18 +146,21 @@ gsheet cells get <spreadsheet-id> --sheet "Sheet1" --format csv > data.csv
 ### Notes - Cell Note Operations
 
 ```bash
+# Get the note on a cell
+gsheet cells note get <spreadsheet-id> --sheet "Sheet1" --cell "B3"
+
 # Set a note on a cell
-gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --note "manually entered"
+gsheet cells note set <spreadsheet-id> --sheet "Sheet1" --cell "B3" --note "manually entered"
 
 # Read note text from stdin
-echo "supplemental comment" | gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --stdin
-cat memo.txt | gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --stdin
+echo "supplemental comment" | gsheet cells note set <spreadsheet-id> --sheet "Sheet1" --cell "B3" --stdin
+cat memo.txt | gsheet cells note set <spreadsheet-id> --sheet "Sheet1" --cell "B3" --stdin
 
 # Clear a note (omit --note flag)
-gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3"
+gsheet cells note set <spreadsheet-id> --sheet "Sheet1" --cell "B3"
 
 # Clear a note (pass empty string)
-gsheet cells note <spreadsheet-id> --sheet "Sheet1" --cell "B3" --note ""
+gsheet cells note set <spreadsheet-id> --sheet "Sheet1" --cell "B3" --note ""
 ```
 
 ### Get - Quick Access via URL

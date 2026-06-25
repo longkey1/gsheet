@@ -63,12 +63,26 @@ var cellsClearCmd = &cobra.Command{
 	RunE:  runCellsClear,
 }
 
-// cellsNoteCmd represents the cells note command
+// cellsNoteCmd represents the cells note command group
 var cellsNoteCmd = &cobra.Command{
-	Use:   "note <spreadsheet-id>",
+	Use:   "note",
+	Short: "Get or set a note on a cell",
+}
+
+// cellsNoteGetCmd represents the cells note get command
+var cellsNoteGetCmd = &cobra.Command{
+	Use:   "get <spreadsheet-id>",
+	Short: "Get the note on a cell",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runCellsNoteGet,
+}
+
+// cellsNoteSetCmd represents the cells note set command
+var cellsNoteSetCmd = &cobra.Command{
+	Use:   "set <spreadsheet-id>",
 	Short: "Set or clear a note on a cell",
 	Args:  cobra.ExactArgs(1),
-	RunE:  runCellsNote,
+	RunE:  runCellsNoteSet,
 }
 
 // cellsImportCmd represents the cells import command
@@ -206,7 +220,38 @@ func runCellsClear(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runCellsNote(cmd *cobra.Command, args []string) error {
+func runCellsNoteGet(cmd *cobra.Command, args []string) error {
+	spreadsheetID := args[0]
+	sheet, _ := cmd.Flags().GetString("sheet")
+	cell, _ := cmd.Flags().GetString("cell")
+
+	if sheet == "" {
+		return fmt.Errorf("--sheet is required")
+	}
+	if cell == "" {
+		return fmt.Errorf("--cell is required")
+	}
+
+	cfg := GetConfig()
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	svc, err := gsheet.NewService(context.Background(), cfg)
+	if err != nil {
+		return err
+	}
+
+	note, err := gsheet.GetNote(svc.Sheets.Service, spreadsheetID, sheet, cell)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stdout, note)
+	return nil
+}
+
+func runCellsNoteSet(cmd *cobra.Command, args []string) error {
 	spreadsheetID := args[0]
 	sheet, _ := cmd.Flags().GetString("sheet")
 	cell, _ := cmd.Flags().GetString("cell")
@@ -338,10 +383,15 @@ func init() {
 	cellsClearCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C10)")
 
 	cellsCmd.AddCommand(cellsNoteCmd)
-	cellsNoteCmd.Flags().String("sheet", "", "Sheet name (required)")
-	cellsNoteCmd.Flags().String("cell", "", "Cell in A1 notation, e.g. B3 (required)")
-	cellsNoteCmd.Flags().String("note", "", "Note text. Omit or pass empty string to clear the note.")
-	cellsNoteCmd.Flags().Bool("stdin", false, "Read note text from stdin")
+	cellsNoteCmd.AddCommand(cellsNoteGetCmd)
+	cellsNoteGetCmd.Flags().String("sheet", "", "Sheet name (required)")
+	cellsNoteGetCmd.Flags().String("cell", "", "Cell in A1 notation, e.g. B3 (required)")
+
+	cellsNoteCmd.AddCommand(cellsNoteSetCmd)
+	cellsNoteSetCmd.Flags().String("sheet", "", "Sheet name (required)")
+	cellsNoteSetCmd.Flags().String("cell", "", "Cell in A1 notation, e.g. B3 (required)")
+	cellsNoteSetCmd.Flags().String("note", "", "Note text. Omit or pass empty string to clear the note.")
+	cellsNoteSetCmd.Flags().Bool("stdin", false, "Read note text from stdin")
 
 	cellsCmd.AddCommand(cellsImportCmd)
 	cellsImportCmd.Flags().String("sheet", "", "Sheet name (required)")

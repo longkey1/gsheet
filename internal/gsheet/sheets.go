@@ -369,6 +369,26 @@ func DeleteDimension(svc *sheets.Service, spreadsheetID string, sheetID int64, d
 	return nil
 }
 
+// GetNote returns the note on a single cell identified by sheet name and A1 notation.
+func GetNote(svc *sheets.Service, spreadsheetID, sheet, cell string) (string, error) {
+	rangeStr := BuildRange(sheet, cell)
+	resp, err := svc.Spreadsheets.Get(spreadsheetID).
+		Ranges(rangeStr).
+		IncludeGridData(true).
+		Fields("sheets/data/rowData/values/note").
+		Do()
+	if err != nil {
+		return "", fmt.Errorf("unable to get note: %v", err)
+	}
+	if len(resp.Sheets) == 0 ||
+		len(resp.Sheets[0].Data) == 0 ||
+		len(resp.Sheets[0].Data[0].RowData) == 0 ||
+		len(resp.Sheets[0].Data[0].RowData[0].Values) == 0 {
+		return "", nil
+	}
+	return resp.Sheets[0].Data[0].RowData[0].Values[0].Note, nil
+}
+
 // UpdateNote sets or clears the note on a single cell identified by A1 notation.
 // Pass an empty string to clear the note.
 func UpdateNote(svc *sheets.Service, spreadsheetID string, sheetID int64, cell, note string) error {
