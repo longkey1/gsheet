@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"google.golang.org/api/drive/v3"
@@ -344,6 +345,65 @@ func DeleteDimension(svc *sheets.Service, spreadsheetID string, sheetID int64, d
 		return fmt.Errorf("unable to delete %s: %v", strings.ToLower(dimension), err)
 	}
 	return nil
+}
+
+// UpdateNote sets or clears the note on a single cell identified by A1 notation.
+// Pass an empty string to clear the note.
+func UpdateNote(svc *sheets.Service, spreadsheetID string, sheetID int64, cell, note string) error {
+	col, row, err := a1ToColRow(cell)
+	if err != nil {
+		return err
+	}
+	req := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			{
+				UpdateCells: &sheets.UpdateCellsRequest{
+					Rows: []*sheets.RowData{
+						{Values: []*sheets.CellData{{Note: note}}},
+					},
+					Fields: "note",
+					Range: &sheets.GridRange{
+						SheetId:          sheetID,
+						StartRowIndex:    int64(row),
+						EndRowIndex:      int64(row + 1),
+						StartColumnIndex: int64(col),
+						EndColumnIndex:   int64(col + 1),
+					},
+				},
+			},
+		},
+	}
+	_, err = svc.Spreadsheets.BatchUpdate(spreadsheetID, req).Do()
+	if err != nil {
+		return fmt.Errorf("unable to update note: %v", err)
+	}
+	return nil
+}
+
+// a1ToColRow converts an A1 notation cell reference to 0-based column and row indices.
+func a1ToColRow(cell string) (col, row int, err error) {
+	cell = strings.ToUpper(strings.TrimSpace(cell))
+	split := strings.IndexAny(cell, "0123456789")
+	if split <= 0 || split == len(cell) {
+		return 0, 0, fmt.Errorf("invalid cell reference: %s", cell)
+	}
+	colPart := cell[:split]
+	rowPart := cell[split:]
+
+	for _, c := range colPart {
+		if c < 'A' || c > 'Z' {
+			return 0, 0, fmt.Errorf("invalid cell reference: %s", cell)
+		}
+		col = col*26 + int(c-'A'+1)
+	}
+	col--
+
+	rowNum, err := strconv.Atoi(rowPart)
+	if err != nil || rowNum < 1 {
+		return 0, 0, fmt.Errorf("invalid cell reference: %s", cell)
+	}
+	row = rowNum - 1
+	return col, row, nil
 }
 
 // colRowToA1 converts 0-based column and row to A1 notation
