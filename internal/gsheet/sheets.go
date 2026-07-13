@@ -15,11 +15,11 @@ import (
 
 // SpreadsheetInfo represents a spreadsheet in Google Drive
 type SpreadsheetInfo struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	CreatedTime string `json:"createdTime"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	CreatedTime  string `json:"createdTime"`
 	ModifiedTime string `json:"modifiedTime"`
-	WebViewLink string `json:"webViewLink"`
+	WebViewLink  string `json:"webViewLink"`
 }
 
 // SheetInfo represents a worksheet tab within a spreadsheet
@@ -107,7 +107,7 @@ func GetValues(svc *sheets.Service, spreadsheetID, rangeStr string) (*CellData, 
 }
 
 // UpdateValues updates cell values in a spreadsheet
-func UpdateValues(svc *sheets.Service, spreadsheetID, rangeStr string, values [][]interface{}) error {
+func UpdateValues(svc *sheets.Service, spreadsheetID, rangeStr string, values [][]any) error {
 	vr := &sheets.ValueRange{
 		Values: values,
 	}
@@ -120,7 +120,7 @@ func UpdateValues(svc *sheets.Service, spreadsheetID, rangeStr string, values []
 }
 
 // AppendValues appends rows to a spreadsheet
-func AppendValues(svc *sheets.Service, spreadsheetID, rangeStr string, values [][]interface{}) error {
+func AppendValues(svc *sheets.Service, spreadsheetID, rangeStr string, values [][]any) error {
 	vr := &sheets.ValueRange{
 		Values: values,
 	}
@@ -478,8 +478,8 @@ func BuildRange(sheet, cellRange string) string {
 
 // ParseValues parses a semicolon-separated, comma-separated value string into a 2D array
 // Example: "a,b,c;d,e,f" -> [[a,b,c],[d,e,f]]
-func ParseValues(input string) [][]interface{} {
-	var result [][]interface{}
+func ParseValues(input string) [][]any {
+	var result [][]any
 	rows := strings.Split(input, ";")
 	for _, row := range rows {
 		row = strings.TrimSpace(row)
@@ -487,7 +487,7 @@ func ParseValues(input string) [][]interface{} {
 			continue
 		}
 		cells := strings.Split(row, ",")
-		var rowData []interface{}
+		var rowData []any
 		for _, cell := range cells {
 			rowData = append(rowData, strings.TrimSpace(cell))
 		}
@@ -497,9 +497,9 @@ func ParseValues(input string) [][]interface{} {
 }
 
 // ParseValuesFromReader reads CSV-formatted data from a reader
-func ParseValuesFromReader(r io.Reader) ([][]interface{}, error) {
+func ParseValuesFromReader(r io.Reader) ([][]any, error) {
 	reader := csv.NewReader(bufio.NewReader(r))
-	var result [][]interface{}
+	var result [][]any
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -508,7 +508,7 @@ func ParseValuesFromReader(r io.Reader) ([][]interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading CSV input: %v", err)
 		}
-		var row []interface{}
+		var row []any
 		for _, cell := range record {
 			row = append(row, cell)
 		}

@@ -336,7 +336,7 @@ func runCellsImport(cmd *cobra.Command, args []string) error {
 // --file reads CSV-formatted data.
 // --stdin reads CSV-formatted data, or the entire content as a single cell
 // value when stdinAsSingleCell is true.
-func parseInputValues(filePath string, useStdin bool, valuesStr string, stdinAsSingleCell bool) ([][]interface{}, error) {
+func parseInputValues(filePath string, useStdin bool, valuesStr string, stdinAsSingleCell bool) ([][]any, error) {
 	if filePath != "" {
 		f, err := os.Open(filePath)
 		if err != nil {
@@ -351,7 +351,7 @@ func parseInputValues(filePath string, useStdin bool, valuesStr string, stdinAsS
 			if err != nil {
 				return nil, fmt.Errorf("unable to read stdin: %w", err)
 			}
-			return [][]interface{}{{string(b)}}, nil
+			return [][]any{{string(b)}}, nil
 		}
 		return gsheet.ParseValuesFromReader(os.Stdin)
 	}

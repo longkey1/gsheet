@@ -28,10 +28,6 @@ tidy: ## Tidy dependencies
 clean: ## Clean build artifacts
 	rm -rf bin/
 
-.PHONY: tools
-tools: ## Install tools
-	go install github.com/goreleaser/goreleaser@latest
-
 .PHONY: release
 
 # Get current version from git tag
