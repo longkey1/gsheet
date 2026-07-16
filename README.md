@@ -36,13 +36,20 @@ application_credentials = "/path/to/credentials.json"
 user_credentials = "/path/to/token.json"
 ```
 
+To use a service account instead (no browser-based OAuth flow required):
+
+```toml
+auth_type = "service_account"
+application_credentials = "/path/to/service-account-key.json"
+```
+
 ### 3. Authenticate
 
 ```bash
 gsheet auth
 ```
 
-This will open your browser for Google OAuth authentication.
+This will open your browser for Google OAuth authentication. Only applicable when `auth_type` is `oauth`; service accounts skip this step.
 
 ## Usage
 
@@ -57,6 +64,9 @@ gsheet files list -q "budget"
 
 # Show only spreadsheets owned by me
 gsheet files list --mine
+
+# Limit the number of results (default: 20)
+gsheet files list -n 50
 
 # Output as JSON
 gsheet files list --format json
@@ -97,6 +107,9 @@ gsheet sheets rows delete <spreadsheet-id> --sheet "Sheet1" --start 3 --count 3
 
 # Insert 2 columns at column 3
 gsheet sheets cols insert <spreadsheet-id> --sheet "Sheet1" --start 3 --count 2
+
+# Insert columns inheriting formatting from the column before
+gsheet sheets cols insert <spreadsheet-id> --sheet "Sheet1" --start 3 --after
 
 # Delete column 2
 gsheet sheets cols delete <spreadsheet-id> --sheet "Sheet1" --start 2
