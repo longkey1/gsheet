@@ -7,8 +7,9 @@ This file provides guidance to AI coding agents (Claude Code, etc.) when working
 ```bash
 make build     # Build binary to ./bin/gsheet
 make test      # Run tests
-make vet       # Lint
+make vet       # Vet code
 make fmt       # Format code
+make lint      # Run golangci-lint (version managed by go.mod tool directive)
 make tidy      # go mod tidy
 make clean     # Remove build artifacts
 make release type=patch dryrun=false  # Tag and push a release

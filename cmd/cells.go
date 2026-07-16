@@ -187,7 +187,7 @@ func runCellsUpdate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(os.Stdout, "Values updated successfully.")
+	_, _ = fmt.Fprintln(os.Stdout, "Values updated successfully.")
 	return nil
 }
 
@@ -216,7 +216,7 @@ func runCellsClear(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(os.Stdout, "Values cleared successfully.")
+	_, _ = fmt.Fprintln(os.Stdout, "Values cleared successfully.")
 	return nil
 }
 
@@ -247,7 +247,7 @@ func runCellsNoteGet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(os.Stdout, note)
+	_, _ = fmt.Fprintln(os.Stdout, note)
 	return nil
 }
 
@@ -292,7 +292,7 @@ func runCellsNoteSet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(os.Stdout, "Note updated successfully.")
+	_, _ = fmt.Fprintln(os.Stdout, "Note updated successfully.")
 	return nil
 }
 
@@ -328,7 +328,7 @@ func runCellsImport(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(os.Stdout, "Values imported successfully.")
+	_, _ = fmt.Fprintln(os.Stdout, "Values imported successfully.")
 	return nil
 }
 
@@ -342,7 +342,7 @@ func parseInputValues(filePath string, useStdin bool, valuesStr string, stdinAsS
 		if err != nil {
 			return nil, fmt.Errorf("unable to open file: %w", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		return gsheet.ParseValuesFromReader(f)
 	}
 	if useStdin {

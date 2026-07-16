@@ -158,7 +158,7 @@ func runSheetsRename(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "Sheet \"%s\" renamed to \"%s\" successfully.\n", sheet, title)
+	_, _ = fmt.Fprintf(os.Stdout, "Sheet \"%s\" renamed to \"%s\" successfully.\n", sheet, title)
 	return nil
 }
 
@@ -198,7 +198,7 @@ func runSheetsAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Fprintf(os.Stdout, "Sheet \"%s\" added successfully (sheetId: %d).\n", info.Title, info.SheetID)
+	_, _ = fmt.Fprintf(os.Stdout, "Sheet \"%s\" added successfully (sheetId: %d).\n", info.Title, info.SheetID)
 	return nil
 }
 
@@ -242,7 +242,7 @@ func runDimensionInsert(cmd *cobra.Command, args []string, dimension string) err
 	if dimension == "COLUMNS" {
 		label = "column(s)"
 	}
-	fmt.Fprintf(os.Stdout, "%d %s inserted successfully.\n", count, label)
+	_, _ = fmt.Fprintf(os.Stdout, "%d %s inserted successfully.\n", count, label)
 	return nil
 }
 
@@ -285,7 +285,7 @@ func runDimensionDelete(cmd *cobra.Command, args []string, dimension string) err
 	if dimension == "COLUMNS" {
 		label = "column(s)"
 	}
-	fmt.Fprintf(os.Stdout, "%d %s deleted successfully.\n", count, label)
+	_, _ = fmt.Fprintf(os.Stdout, "%d %s deleted successfully.\n", count, label)
 	return nil
 }
 

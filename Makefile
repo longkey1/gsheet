@@ -20,6 +20,10 @@ fmt: ## Format code
 vet: ## Vet code
 	go vet ./...
 
+.PHONY: lint
+lint: ## Run golangci-lint (version managed by go.mod tool directive)
+	go tool golangci-lint run
+
 .PHONY: tidy
 tidy: ## Tidy dependencies
 	go mod tidy

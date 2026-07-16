@@ -119,13 +119,13 @@ func TestParseInputValuesStdin(t *testing.T) {
 			if _, err := w.WriteString(tt.input); err != nil {
 				t.Fatal(err)
 			}
-			w.Close()
+			_ = w.Close()
 
 			orig := os.Stdin
 			os.Stdin = r
 			t.Cleanup(func() {
 				os.Stdin = orig
-				r.Close()
+				_ = r.Close()
 			})
 
 			got, err := parseInputValues("", true, "", tt.stdinAsSingleCell)

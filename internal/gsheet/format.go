@@ -25,7 +25,7 @@ func FormatSpreadsheetList(w io.Writer, spreadsheets []SpreadsheetInfo, format O
 		if err != nil {
 			return fmt.Errorf("unable to marshal JSON: %w", err)
 		}
-		fmt.Fprintln(w, string(data))
+		_, _ = fmt.Fprintln(w, string(data))
 		return nil
 	}
 
@@ -33,10 +33,10 @@ func FormatSpreadsheetList(w io.Writer, spreadsheets []SpreadsheetInfo, format O
 	table.Header("ID", "NAME", "MODIFIED")
 
 	for _, s := range spreadsheets {
-		table.Append(s.ID, s.Name, s.ModifiedTime)
+		_ = table.Append(s.ID, s.Name, s.ModifiedTime)
 	}
 
-	table.Render()
+	_ = table.Render()
 	return nil
 }
 
@@ -47,7 +47,7 @@ func FormatCellData(w io.Writer, data *CellData, format OutputFormat) error {
 		if err != nil {
 			return fmt.Errorf("unable to marshal JSON: %w", err)
 		}
-		fmt.Fprintln(w, string(jsonData))
+		_, _ = fmt.Fprintln(w, string(jsonData))
 		return nil
 	}
 
@@ -66,7 +66,7 @@ func FormatCellData(w io.Writer, data *CellData, format OutputFormat) error {
 	}
 
 	if len(data.Values) == 0 {
-		fmt.Fprintln(w, "No data found.")
+		_, _ = fmt.Fprintln(w, "No data found.")
 		return nil
 	}
 
@@ -85,10 +85,10 @@ func FormatCellData(w io.Writer, data *CellData, format OutputFormat) error {
 		for _, cell := range row {
 			rowData = append(rowData, cell)
 		}
-		table.Append(rowData)
+		_ = table.Append(rowData)
 	}
 
-	table.Render()
+	_ = table.Render()
 	return nil
 }
 
@@ -99,12 +99,12 @@ func FormatSheetList(w io.Writer, sheetInfos []SheetInfo, format OutputFormat) e
 		if err != nil {
 			return fmt.Errorf("unable to marshal JSON: %w", err)
 		}
-		fmt.Fprintln(w, string(data))
+		_, _ = fmt.Fprintln(w, string(data))
 		return nil
 	}
 
 	if len(sheetInfos) == 0 {
-		fmt.Fprintln(w, "No sheets found.")
+		_, _ = fmt.Fprintln(w, "No sheets found.")
 		return nil
 	}
 
@@ -112,10 +112,10 @@ func FormatSheetList(w io.Writer, sheetInfos []SheetInfo, format OutputFormat) e
 	table.Header("SHEET ID", "TITLE", "INDEX", "ROWS", "COLS")
 
 	for _, s := range sheetInfos {
-		table.Append(s.SheetID, s.Title, s.Index, s.RowCount, s.ColCount)
+		_ = table.Append(s.SheetID, s.Title, s.Index, s.RowCount, s.ColCount)
 	}
 
-	table.Render()
+	_ = table.Render()
 	return nil
 }
 
@@ -126,12 +126,12 @@ func FormatCellLocations(w io.Writer, locations []CellLocation, format OutputFor
 		if err != nil {
 			return fmt.Errorf("unable to marshal JSON: %w", err)
 		}
-		fmt.Fprintln(w, string(data))
+		_, _ = fmt.Fprintln(w, string(data))
 		return nil
 	}
 
 	if len(locations) == 0 {
-		fmt.Fprintln(w, "No matching cells found.")
+		_, _ = fmt.Fprintln(w, "No matching cells found.")
 		return nil
 	}
 
@@ -139,9 +139,9 @@ func FormatCellLocations(w io.Writer, locations []CellLocation, format OutputFor
 	table.Header("SHEET", "CELL", "VALUE")
 
 	for _, loc := range locations {
-		table.Append(loc.Sheet, loc.Cell, loc.Value)
+		_ = table.Append(loc.Sheet, loc.Cell, loc.Value)
 	}
 
-	table.Render()
+	_ = table.Render()
 	return nil
 }

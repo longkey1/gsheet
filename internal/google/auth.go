@@ -80,7 +80,7 @@ func (a *OAuthAuthenticator) tokenFromFile() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	token := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(token)
@@ -92,7 +92,7 @@ func (a *OAuthAuthenticator) saveToken(token *oauth2.Token) error {
 	if err != nil {
 		return fmt.Errorf("unable to cache oauth token: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	return json.NewEncoder(f).Encode(token)
 }
 
@@ -134,7 +134,7 @@ func (a *OAuthAuthenticator) Authenticate() error {
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprintf(w, `<html><body><h1>Authentication successful!</h1><p>You can close this window.</p></body></html>`)
+		_, _ = fmt.Fprintf(w, `<html><body><h1>Authentication successful!</h1><p>You can close this window.</p></body></html>`)
 		codeChan <- code
 	})
 
@@ -158,12 +158,12 @@ func (a *OAuthAuthenticator) Authenticate() error {
 	select {
 	case code = <-codeChan:
 	case err := <-errChan:
-		server.Close()
+		_ = server.Close()
 		return fmt.Errorf("authentication failed: %v", err)
 	}
 
 	// Shutdown server
-	server.Close()
+	_ = server.Close()
 
 	// Exchange code for token
 	token, err := config.Exchange(context.Background(), code)

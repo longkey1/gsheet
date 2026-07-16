@@ -43,12 +43,12 @@ func runAuth(cmd *cobra.Command, args []string) error {
 
 	// Check if token already exists
 	if _, err := os.Stat(cfg.GoogleUserCredentials); err == nil {
-		fmt.Fprintf(cmd.OutOrStdout(), "Token file already exists: %s\n", cfg.GoogleUserCredentials)
-		fmt.Fprint(cmd.OutOrStdout(), "Do you want to re-authenticate? [y/N]: ")
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Token file already exists: %s\n", cfg.GoogleUserCredentials)
+		_, _ = fmt.Fprint(cmd.OutOrStdout(), "Do you want to re-authenticate? [y/N]: ")
 		var response string
-		fmt.Scanln(&response)
+		_, _ = fmt.Scanln(&response)
 		if response != "y" && response != "Y" {
-			fmt.Fprintln(cmd.OutOrStdout(), "Cancelled.")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Cancelled.")
 			return nil
 		}
 	}
@@ -63,7 +63,7 @@ func runAuth(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	fmt.Fprintln(cmd.OutOrStdout(), "Authentication successful!")
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Authentication successful!")
 	return nil
 }
 
