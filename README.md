@@ -224,6 +224,9 @@ gsheet version
 | `auth_type` | Authentication type: `oauth` or `service_account` |
 | `application_credentials` | Path to OAuth client credentials JSON file |
 | `user_credentials` | Path to store OAuth user token (for OAuth auth type) |
+| `read_only` | When `true`, disables all write commands (add, update, clear, delete, etc.) |
+
+Write commands can also be disabled via the `GSHEET_READ_ONLY` environment variable (e.g. `GSHEET_READ_ONLY=true`), which is useful when letting an LLM operate the CLI without config file changes.
 
 ## License
 

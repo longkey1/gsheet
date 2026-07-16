@@ -53,6 +53,18 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/gsheet/config.toml)")
+	rootCmd.PersistentPreRunE = checkReadOnly
+}
+
+// checkReadOnly blocks commands annotated as write operations when read-only
+// mode is enabled via the GSHEET_READ_ONLY env var or the read_only config
+// option. This lets write commands stay disabled even when no config file
+// is present (e.g. when only the env var is set for LLM usage).
+func checkReadOnly(cmd *cobra.Command, args []string) error {
+	if cmd.Annotations["write"] == "true" && viper.GetBool("read_only") {
+		return fmt.Errorf("read-only mode is enabled (GSHEET_READ_ONLY or read_only in config): write commands are disabled")
+	}
+	return nil
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -69,6 +81,7 @@ func initConfig() {
 	}
 
 	viper.AutomaticEnv()
+	cobra.CheckErr(viper.BindEnv("read_only", "GSHEET_READ_ONLY"))
 
 	// Config file is optional for some commands (e.g., version)
 	if err := viper.ReadInConfig(); err != nil {

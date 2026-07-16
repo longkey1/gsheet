@@ -49,18 +49,20 @@ var cellsGetCmd = &cobra.Command{
 
 // cellsUpdateCmd represents the cells update command
 var cellsUpdateCmd = &cobra.Command{
-	Use:   "update <spreadsheet-id>",
-	Short: "Update cell values in a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runCellsUpdate,
+	Use:         "update <spreadsheet-id>",
+	Short:       "Update cell values in a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runCellsUpdate,
 }
 
 // cellsClearCmd represents the cells clear command
 var cellsClearCmd = &cobra.Command{
-	Use:   "clear <spreadsheet-id>",
-	Short: "Clear cell values in a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runCellsClear,
+	Use:         "clear <spreadsheet-id>",
+	Short:       "Clear cell values in a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runCellsClear,
 }
 
 // cellsNoteCmd represents the cells note command group
@@ -79,18 +81,20 @@ var cellsNoteGetCmd = &cobra.Command{
 
 // cellsNoteSetCmd represents the cells note set command
 var cellsNoteSetCmd = &cobra.Command{
-	Use:   "set <spreadsheet-id>",
-	Short: "Set or clear a note on a cell",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runCellsNoteSet,
+	Use:         "set <spreadsheet-id>",
+	Short:       "Set or clear a note on a cell",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runCellsNoteSet,
 }
 
 // cellsImportCmd represents the cells import command
 var cellsImportCmd = &cobra.Command{
-	Use:   "import <spreadsheet-id>",
-	Short: "Import CSV data into a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runCellsImport,
+	Use:         "import <spreadsheet-id>",
+	Short:       "Import CSV data into a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runCellsImport,
 }
 
 func runCellsList(cmd *cobra.Command, args []string) error {

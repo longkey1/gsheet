@@ -40,18 +40,20 @@ var sheetsListCmd = &cobra.Command{
 
 // sheetsAddCmd represents the sheets add command
 var sheetsAddCmd = &cobra.Command{
-	Use:   "add <spreadsheet-id>",
-	Short: "Add a new worksheet tab to a spreadsheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSheetsAdd,
+	Use:         "add <spreadsheet-id>",
+	Short:       "Add a new worksheet tab to a spreadsheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runSheetsAdd,
 }
 
 // sheetsRenameCmd represents the sheets rename command
 var sheetsRenameCmd = &cobra.Command{
-	Use:   "rename <spreadsheet-id>",
-	Short: "Rename a worksheet tab in a spreadsheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSheetsRename,
+	Use:         "rename <spreadsheet-id>",
+	Short:       "Rename a worksheet tab in a spreadsheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runSheetsRename,
 }
 
 // sheetsRowsCmd represents the sheets rows command
@@ -62,18 +64,20 @@ var sheetsRowsCmd = &cobra.Command{
 
 // sheetsRowsInsertCmd represents the sheets rows insert command
 var sheetsRowsInsertCmd = &cobra.Command{
-	Use:   "insert <spreadsheet-id>",
-	Short: "Insert rows into a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSheetsRowsInsert,
+	Use:         "insert <spreadsheet-id>",
+	Short:       "Insert rows into a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runSheetsRowsInsert,
 }
 
 // sheetsRowsDeleteCmd represents the sheets rows delete command
 var sheetsRowsDeleteCmd = &cobra.Command{
-	Use:   "delete <spreadsheet-id>",
-	Short: "Delete rows from a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSheetsRowsDelete,
+	Use:         "delete <spreadsheet-id>",
+	Short:       "Delete rows from a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runSheetsRowsDelete,
 }
 
 // sheetsColsCmd represents the sheets cols command
@@ -84,18 +88,20 @@ var sheetsColsCmd = &cobra.Command{
 
 // sheetsColsInsertCmd represents the sheets cols insert command
 var sheetsColsInsertCmd = &cobra.Command{
-	Use:   "insert <spreadsheet-id>",
-	Short: "Insert columns into a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSheetsColsInsert,
+	Use:         "insert <spreadsheet-id>",
+	Short:       "Insert columns into a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runSheetsColsInsert,
 }
 
 // sheetsColsDeleteCmd represents the sheets cols delete command
 var sheetsColsDeleteCmd = &cobra.Command{
-	Use:   "delete <spreadsheet-id>",
-	Short: "Delete columns from a worksheet",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSheetsColsDelete,
+	Use:         "delete <spreadsheet-id>",
+	Short:       "Delete columns from a worksheet",
+	Args:        cobra.ExactArgs(1),
+	Annotations: map[string]string{"write": "true"},
+	RunE:        runSheetsColsDelete,
 }
 
 func runSheetsList(cmd *cobra.Command, args []string) error {

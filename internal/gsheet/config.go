@@ -19,6 +19,7 @@ type Config struct {
 	AuthType                     AuthType `mapstructure:"auth_type"`
 	GoogleApplicationCredentials string   `mapstructure:"application_credentials"`
 	GoogleUserCredentials        string   `mapstructure:"user_credentials"`
+	ReadOnly                     bool     `mapstructure:"read_only"`
 }
 
 // LoadConfig loads configuration from viper

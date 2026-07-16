@@ -55,6 +55,19 @@ user_credentials = "/path/to/token.json"
 			content: "",
 			want:    &Config{AuthType: AuthTypeOAuth},
 		},
+		{
+			name: "read_only enabled",
+			content: `application_credentials = "/path/to/credentials.json"
+user_credentials = "/path/to/token.json"
+read_only = true
+`,
+			want: &Config{
+				AuthType:                     AuthTypeOAuth,
+				GoogleApplicationCredentials: "/path/to/credentials.json",
+				GoogleUserCredentials:        "/path/to/token.json",
+				ReadOnly:                     true,
+			},
+		},
 	}
 
 	for _, tt := range tests {
