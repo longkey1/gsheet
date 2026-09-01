@@ -1,4 +1,4 @@
-name: gorelease
+name: Release
 
 run-name: Release ${{ github.ref_name }}
 
