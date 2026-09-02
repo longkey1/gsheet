@@ -115,6 +115,8 @@ re-release: ## Rerelease target with tag argument. Usage: make re-release tag=<t
 	fi; \
 	echo "Target tag: $$TAG"; \
 	if [ "$(dryrun)" = "false" ]; then \
+		echo "Pushing master to origin..."; \
+		git push origin master --no-verify --force-with-lease; \
 		echo "Deleting GitHub release and associated tag..."; \
 		gh release delete "$$TAG" --cleanup-tag -y || true; \
 		echo "Deleting local tag..."; \
@@ -131,6 +133,7 @@ re-release: ## Rerelease target with tag argument. Usage: make re-release tag=<t
 		echo "Done!"; \
 	else \
 		echo "[DRY RUN] Showing what would be done..."; \
+		echo "Would push to origin/master"; \
 		echo "Would delete release: $$TAG"; \
 		echo "Would delete local tag: $$TAG"; \
 		echo "Would delete remote tag: $$TAG"; \
