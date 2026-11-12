@@ -143,6 +143,13 @@ gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "A1:C2" --file dat
 echo "multi-line\nnote" | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "B2" --stdin
 cat note.md | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "B2" --stdin
 
+# Write Markdown with in-cell links, **bold**, *italic* and ~~strikethrough~~ (--stdin or --file only)
+echo -n 'Tickets: [PROJ-1](https://example.atlassian.net/browse/PROJ-1), [PROJ-2](https://example.atlassian.net/browse/PROJ-2)' \
+  | gsheet cells update <spreadsheet-id> --sheet "Sheet1" --range "B2" --markdown --stdin
+
+# Read cells with in-cell formatting rendered as Markdown
+gsheet cells get <spreadsheet-id> --sheet "Sheet1" --range "B2" --markdown
+
 # Import CSV file into a worksheet
 gsheet cells import <spreadsheet-id> --sheet "Sheet1" --file data.csv
 

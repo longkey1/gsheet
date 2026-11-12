@@ -119,6 +119,182 @@ func UpdateValues(svc *sheets.Service, spreadsheetID, rangeStr string, values []
 	return nil
 }
 
+// GetRichValues retrieves cell values with in-cell formatting rendered as Markdown.
+// Cell-level text format is included because Sheets stores a run covering the
+// whole text as cell-level format instead of as a run.
+func GetRichValues(svc *sheets.Service, spreadsheetID, rangeStr string) (*CellData, error) {
+	resp, err := svc.Spreadsheets.Get(spreadsheetID).
+		Ranges(rangeStr).
+		IncludeGridData(true).
+		Fields("sheets(properties/title,data(startRow,startColumn,rowData/values(formattedValue,hyperlink,textFormatRuns,userEnteredFormat/textFormat)))").
+		Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve data from sheet: %v", err)
+	}
+	if len(resp.Sheets) == 0 || len(resp.Sheets[0].Data) == 0 {
+		return &CellData{Range: rangeStr}, nil
+	}
+
+	grid := resp.Sheets[0].Data[0]
+	var values [][]string
+	for _, row := range grid.RowData {
+		var strRow []string
+		for _, cell := range row.Values {
+			var cellFormat *sheets.TextFormat
+			if cell.UserEnteredFormat != nil {
+				cellFormat = cell.UserEnteredFormat.TextFormat
+			}
+			strRow = append(strRow, RenderMarkdown(cellToSpans(cell.FormattedValue, cell.TextFormatRuns, cellFormat, cell.Hyperlink)))
+		}
+		// Match Values.Get, which omits trailing empty cells and rows.
+		for len(strRow) > 0 && strRow[len(strRow)-1] == "" {
+			strRow = strRow[:len(strRow)-1]
+		}
+		values = append(values, strRow)
+	}
+	for len(values) > 0 && len(values[len(values)-1]) == 0 {
+		values = values[:len(values)-1]
+	}
+
+	return &CellData{
+		Range:  gridRange(resp.Sheets[0].Properties.Title, int(grid.StartRow), int(grid.StartColumn), values, rangeStr),
+		Values: values,
+	}, nil
+}
+
+// gridRange builds the A1 range covered by values, falling back to the requested range when empty.
+func gridRange(title string, startRow, startCol int, values [][]string, requested string) string {
+	maxCols := 0
+	for _, row := range values {
+		maxCols = max(maxCols, len(row))
+	}
+	if len(values) == 0 || maxCols == 0 {
+		return requested
+	}
+	return fmt.Sprintf("%s!%s:%s", quoteSheetTitle(title),
+		colRowToA1(startCol, startRow), colRowToA1(startCol+maxCols-1, startRow+len(values)-1))
+}
+
+var simpleSheetTitle = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
+
+func quoteSheetTitle(title string) string {
+	if simpleSheetTitle.MatchString(title) {
+		return title
+	}
+	return "'" + strings.ReplaceAll(title, "'", "''") + "'"
+}
+
+// richCellFormatFields are the cell-level format fields that Markdown fully
+// determines in --markdown mode. Other formatting such as color is kept.
+const richCellFormatFields = "userEnteredFormat.textFormat.bold," +
+	"userEnteredFormat.textFormat.italic," +
+	"userEnteredFormat.textFormat.strikethrough," +
+	"userEnteredFormat.textFormat.link"
+
+// UpdateRichValues writes values parsed as Markdown, starting at the given cell.
+// A cell whose whole text shares one style without a link is written with
+// USER_ENTERED and the style is set as cell-level format, so numbers, dates and
+// formulas keep being interpreted. Other styled cells are written as strings
+// with text format runs, because runs only apply to string values.
+func UpdateRichValues(svc *sheets.Service, spreadsheetID string, sheetID int64, rangeStr string, startCol, startRow int, values [][]any) error {
+	plain := make([][]any, len(values))
+	formatRows := make([]*sheets.RowData, len(values))
+	var richRequests []*sheets.Request
+
+	for r, row := range values {
+		plain[r] = make([]any, len(row))
+		formatRows[r] = &sheets.RowData{}
+		for c, v := range row {
+			spans := ParseMarkdown(fmt.Sprintf("%v", v))
+
+			// Sheets does not keep a link set as cell-level format, so a linked
+			// cell always goes through the run path.
+			if len(spans) == 0 || (len(spans) == 1 && spans[0].Style.Link == "") {
+				var style richStyle
+				if len(spans) == 1 {
+					plain[r][c] = spans[0].Text
+					style = spans[0].Style
+				} else {
+					plain[r][c] = ""
+				}
+				formatRows[r].Values = append(formatRows[r].Values, &sheets.CellData{
+					UserEnteredFormat: &sheets.CellFormat{TextFormat: toTextFormat(style)},
+				})
+				continue
+			}
+
+			formatRows[r].Values = append(formatRows[r].Values, &sheets.CellData{
+				UserEnteredFormat: &sheets.CellFormat{TextFormat: &sheets.TextFormat{}},
+			})
+			text, runs := spansToCell(spans)
+			// nil is skipped by Values.Update; the cell is written by the request below.
+			plain[r][c] = nil
+			richRequests = append(richRequests, &sheets.Request{
+				UpdateCells: &sheets.UpdateCellsRequest{
+					Start: &sheets.GridCoordinate{
+						SheetId:     sheetID,
+						RowIndex:    int64(startRow + r),
+						ColumnIndex: int64(startCol + c),
+					},
+					Rows: []*sheets.RowData{{Values: []*sheets.CellData{{
+						UserEnteredValue: &sheets.ExtendedValue{StringValue: &text},
+						TextFormatRuns:   runs,
+					}}}},
+					Fields: "userEnteredValue,textFormatRuns",
+				},
+			})
+		}
+	}
+
+	if err := UpdateValues(svc, spreadsheetID, rangeStr, plain); err != nil {
+		return err
+	}
+
+	// Set cell-level styles and clear runs left from previous values before
+	// applying the new runs.
+	requests := append([]*sheets.Request{{
+		UpdateCells: &sheets.UpdateCellsRequest{
+			Start: &sheets.GridCoordinate{
+				SheetId:     sheetID,
+				RowIndex:    int64(startRow),
+				ColumnIndex: int64(startCol),
+			},
+			Rows:   formatRows,
+			Fields: "textFormatRuns," + richCellFormatFields,
+		},
+	}}, richRequests...)
+	_, err := svc.Spreadsheets.BatchUpdate(spreadsheetID, &sheets.BatchUpdateSpreadsheetRequest{Requests: requests}).Do()
+	if err != nil {
+		return fmt.Errorf("unable to update text formatting: %v", err)
+	}
+	return nil
+}
+
+// RangeStart returns the 0-based column and row of the top-left cell of an A1 range like "B3:D5".
+func RangeStart(cellRange string) (col, row int, err error) {
+	start, _, _ := strings.Cut(cellRange, ":")
+	col, row, err = a1ToColRow(start)
+	if err != nil {
+		return 0, 0, fmt.Errorf("range must start with a cell reference such as B3: %s", cellRange)
+	}
+	return col, row, nil
+}
+
+// FirstSheetID returns the sheetId of the leftmost sheet, which the API uses
+// when a range has no sheet name.
+func FirstSheetID(svc *sheets.Service, spreadsheetID string) (int64, error) {
+	allSheets, err := GetSheets(svc, spreadsheetID)
+	if err != nil {
+		return 0, err
+	}
+	for _, s := range allSheets {
+		if s.Index == 0 {
+			return s.SheetID, nil
+		}
+	}
+	return 0, fmt.Errorf("spreadsheet has no sheets")
+}
+
 // AppendValues appends rows to a spreadsheet
 func AppendValues(svc *sheets.Service, spreadsheetID, rangeStr string, values [][]any) error {
 	vr := &sheets.ValueRange{

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/longkey1/gsheet/internal/gsheet"
 	"github.com/spf13/cobra"
@@ -134,6 +135,7 @@ func runCellsGet(cmd *cobra.Command, args []string) error {
 	sheet, _ := cmd.Flags().GetString("sheet")
 	cellRange, _ := cmd.Flags().GetString("range")
 	format, _ := cmd.Flags().GetString("format")
+	markdown, _ := cmd.Flags().GetBool("markdown")
 
 	cfg := GetConfig()
 	if err := cfg.Validate(); err != nil {
@@ -150,7 +152,12 @@ func runCellsGet(cmd *cobra.Command, args []string) error {
 		rangeStr = "Sheet1"
 	}
 
-	data, err := gsheet.GetValues(svc.Sheets.Service, spreadsheetID, rangeStr)
+	var data *gsheet.CellData
+	if markdown {
+		data, err = gsheet.GetRichValues(svc.Sheets.Service, spreadsheetID, rangeStr)
+	} else {
+		data, err = gsheet.GetValues(svc.Sheets.Service, spreadsheetID, rangeStr)
+	}
 	if err != nil {
 		return err
 	}
@@ -165,9 +172,13 @@ func runCellsUpdate(cmd *cobra.Command, args []string) error {
 	valuesStr, _ := cmd.Flags().GetString("values")
 	filePath, _ := cmd.Flags().GetString("file")
 	useStdin, _ := cmd.Flags().GetBool("stdin")
+	markdown, _ := cmd.Flags().GetBool("markdown")
 
 	if cellRange == "" {
 		return fmt.Errorf("--range is required")
+	}
+	if markdown && strings.Contains(cellRange, "!") {
+		return fmt.Errorf("--markdown requires the sheet to be given with --sheet, not in --range")
 	}
 
 	cfg := GetConfig()
@@ -187,12 +198,35 @@ func runCellsUpdate(cmd *cobra.Command, args []string) error {
 
 	rangeStr := gsheet.BuildRange(sheet, cellRange)
 
-	if err := gsheet.UpdateValues(svc.Sheets.Service, spreadsheetID, rangeStr, values); err != nil {
+	if markdown {
+		if err := updateRichValues(svc, spreadsheetID, sheet, cellRange, rangeStr, values); err != nil {
+			return err
+		}
+	} else if err := gsheet.UpdateValues(svc.Sheets.Service, spreadsheetID, rangeStr, values); err != nil {
 		return err
 	}
 
 	_, _ = fmt.Fprintln(os.Stdout, "Values updated successfully.")
 	return nil
+}
+
+func updateRichValues(svc *gsheet.Service, spreadsheetID, sheet, cellRange, rangeStr string, values [][]any) error {
+	col, row, err := gsheet.RangeStart(cellRange)
+	if err != nil {
+		return err
+	}
+
+	var sheetID int64
+	if sheet == "" {
+		sheetID, err = gsheet.FirstSheetID(svc.Sheets.Service, spreadsheetID)
+	} else {
+		sheetID, err = gsheet.GetSheetID(svc.Sheets.Service, spreadsheetID, sheet)
+	}
+	if err != nil {
+		return err
+	}
+
+	return gsheet.UpdateRichValues(svc.Sheets.Service, spreadsheetID, sheetID, rangeStr, col, row, values)
 }
 
 func runCellsClear(cmd *cobra.Command, args []string) error {
@@ -378,6 +412,7 @@ func init() {
 	cellsGetCmd.Flags().String("sheet", "", "Sheet name (default: Sheet1)")
 	cellsGetCmd.Flags().String("range", "", "Cell range in A1 notation (e.g., A1:C10). Omit to fetch the entire sheet.")
 	cellsGetCmd.Flags().String("format", "text", "Output format (text, json, or csv)")
+	cellsGetCmd.Flags().Bool("markdown", false, "Render in-cell links, bold, italic and strikethrough as Markdown")
 
 	cellsCmd.AddCommand(cellsUpdateCmd)
 	cellsUpdateCmd.Flags().String("sheet", "", "Sheet name")
@@ -385,6 +420,9 @@ func init() {
 	cellsUpdateCmd.Flags().String("values", "", `Values to set (semicolon-separated rows, comma-separated cells, e.g., "a,b,c;d,e,f")`)
 	cellsUpdateCmd.Flags().String("file", "", "Path to CSV file")
 	cellsUpdateCmd.Flags().Bool("stdin", false, "Read stdin content as a single cell value")
+	cellsUpdateCmd.Flags().Bool("markdown", false, "Parse values as Markdown and apply links, bold, italic and strikethrough (use with --stdin or --file)")
+	// --values splits on "," and ";", which would break Markdown text such as a list of links.
+	cellsUpdateCmd.MarkFlagsMutuallyExclusive("markdown", "values")
 
 	cellsCmd.AddCommand(cellsClearCmd)
 	cellsClearCmd.Flags().String("sheet", "", "Sheet name")
